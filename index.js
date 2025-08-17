@@ -100,7 +100,7 @@ async function fetchReport(data) {
     });
 
     if (!response.ok) {
-      console.error(`Response Status: ${response.status}`);
+      console.error(`Response Status: ${data.error}`);
       renderReport('There was an error generating the report');
     }
 
