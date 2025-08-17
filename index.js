@@ -86,13 +86,26 @@ async function fetchReport(data) {
   ];
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
-      messages: messages,
+    const url = 'https://openai-api-worker.ajkendal-openai.workers.dev/';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: '',
     });
 
-    renderReport(response.choices[0].message.content);
-  } catch {
+    if (!response.ok) {
+      console.error(`Response Status: ${response.status}`);
+      renderReport('There was an error generating the report');
+    }
+
+    const data = await response.json();
+
+    console.log('data: ', data);
+  } catch (err) {
+    console.error(`Catch Error: ${err.message}`);
     renderReport('There was an error generating the report');
   }
 }
