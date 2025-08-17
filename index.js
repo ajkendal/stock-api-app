@@ -93,7 +93,7 @@ async function fetchReport(data) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: '',
+      body: JSON.stringify(messages),
     });
 
     if (!response.ok) {
@@ -103,7 +103,7 @@ async function fetchReport(data) {
 
     const data = await response.json();
 
-    console.log('data: ', data);
+    renderReport(data.content);
   } catch (err) {
     console.error(`Catch Error: ${err.message}`);
     renderReport('There was an error generating the report');
