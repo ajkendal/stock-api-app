@@ -49,11 +49,14 @@ async function fetchStockData() {
         }/${dates.endDate}?apiKey=${import.meta.env.VITE_POLYGON_API_KEY}`;
 
         const response = await fetch(url);
-        const data = await response.text();
+        const data = await response.json();
         const status = await response.status;
         if (status === 200) {
           apiMessage.innerText = 'Creating report...';
-          return data;
+
+          delete data.request_id;
+
+          return JSON.stringify(data);
         } else {
           loadingArea.innerText = 'There was an error fetching stock data.';
         }
