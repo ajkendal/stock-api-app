@@ -44,33 +44,26 @@ async function fetchStockData() {
   try {
     const stockData = await Promise.all(
       tickersArr.map(async (ticker) => {
-        const url = `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${
-          dates.startDate
-        }/${dates.endDate}?apiKey=${import.meta.env.VITE_POLYGON_API_KEY}`;
+        const url = `https://polygon-api-worker.ajkendal-openai.workers.dev/?ticker=${ticker}&startDate=${dates.startDate}&endDate=${dates.endDate}`;
 
         const response = await fetch(url);
-        const data = await response.text();
-        const status = await response.status;
-        if (status === 200) {
-          apiMessage.innerText = 'Creating report...';
-          return data;
-        } else {
-          loadingArea.innerText = 'There was an error fetching stock data.';
+
+        if (!response.ok) {
+          const errMsg = await response.text();
+          throw new Error('Worker error: ' + errMsg);
         }
+        apiMessage.innerText = 'Creating report...';
+        return response.text();
       })
     );
     fetchReport(stockData.join(''));
   } catch (err) {
     loadingArea.innerText = 'There was an error fetching stock data.';
-    console.error('error: ', err);
+    console.error(err.message);
   }
 }
 
 async function fetchReport(data) {
-  const openai = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true,
-  });
   const messages = [
     {
       role: 'system',
@@ -90,13 +83,26 @@ async function fetchReport(data) {
   ];
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
-      messages: messages,
+    const url = 'https://openai-api-worker.ajkendal-openai.workers.dev/';
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(messages),
     });
 
-    renderReport(response.choices[0].message.content);
-  } catch {
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`Response Status: ${data.error}`);
+      renderReport('There was an error generating the report');
+    }
+
+    renderReport(data.content);
+  } catch (err) {
+    console.error(`Catch Error: ${err.message}`);
     renderReport('There was an error generating the report');
   }
 }
